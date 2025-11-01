@@ -19,7 +19,7 @@ do draw for 300 seconds
 ---
 
 ## Build Instructions
-Make sure you have The gcc compiler and Makefile tools from gnu.
+Make sure you have The `gcc` compiler and `Makefile` tools from gnu.
 
 1. clone the reposetory
 ```bash
