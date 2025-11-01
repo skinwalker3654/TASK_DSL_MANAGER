@@ -41,14 +41,14 @@ make
 ## Project Structure
 ```
 TASK_DSL_MANAGER
-  ├── compiler/
-  |    └── compiler.c
-  |
-  ├─ headers/
-  |    ├── task.c
-  |    └── task.h
-  |
-  ├── README.md
-  ├── Makefile
-  └── LICENSE
+   ├── compiler/
+   |    └── compiler.c
+   |
+   ├─ headers/
+   |    ├── task.c
+   |    └── task.h
+   |
+   ├── README.md
+   ├── Makefile
+   └── LICENSE
 ```
