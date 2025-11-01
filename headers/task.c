@@ -35,11 +35,11 @@ void printTasks(List *ptr) {
 
     for(int i = 0; i < ptr->counter; i++) {
         if(i >= 100) {
-            printf("│ %d │",i);
+            printf("│ %d │",i+1);
         } else if(i >= 10 ) {
-            printf("│ %d  │",i);
+            printf("│ %d  │",i+1);
         } else {
-            printf("│ %d   │",i);
+            printf("│ %d   │",i+1);
         }
 
         printf(" %-20s │ ", ptr->tasks[i].name);
@@ -81,7 +81,7 @@ void countTasks(List *ptr) {
         printf(CYAN "   Duration: %d seconds\n\n" RESET, t.time);
 
         for(int j=t.time; j>=0; j--) {
-            printf("\rTime remaining: %3d seconds", j);
+            printf("\rTime remaining: %3d sec", j);
             fflush(stdout);
             sleep(1);
         }
