@@ -11,6 +11,8 @@ typedef enum {
     ABOUT,
     STRING,
     NUMBER,
+    SET,
+    EQUAL,
     NAME,
     EOF_,
 } TokenType;
@@ -22,7 +24,6 @@ typedef struct Token {
 
 Token getNextToken(char **input) {
     while(isspace(**input)) (*input)++;
-    if(**input == '\0') return (Token){EOF_,""};
 
     if(isalpha(**input)) {
         Token token;
@@ -48,6 +49,9 @@ Token getNextToken(char **input) {
             return token;
         } else if(strcmp(token.name,"minutes")==0) {
             token.type = MINUTES;
+            return token;
+        } else if(strcmp(token.name,"set")==0) {
+            token.type = SET;
             return token;
         } else {
             token.type = NAME;
@@ -84,10 +88,18 @@ Token getNextToken(char **input) {
         return token;
     }
 
+    char operation = *(*input)++;
+    if(operation == '=') return (Token){EQUAL,"="};
+
     return (Token){EOF_,""};
 }
 
 typedef struct Symbol {
+    struct {
+        char name[200][200];
+        int value[200];
+        int counter;
+    } Variables;
     char name[200][200];
     int time[200];
     int TopicOrNot[200];
@@ -98,6 +110,47 @@ typedef struct Symbol {
 
 int parseTokens(Symbol *ptr,char **input) {
     Token token = getNextToken(input);
+    if(token.type == EOF_) return 0;
+
+    if(token.type == SET) {
+        token = getNextToken(input);
+        if(token.type != NAME) {
+            printf("Error: Invalid variable name '%s'\n",token.name);
+            return -1;
+        }
+
+        strcpy(ptr->Variables.name[ptr->Variables.counter],token.name);
+        token = getNextToken(input);
+        if(token.type != EQUAL) {
+            printf("Error: Forgot equal '='\n");
+            return -1;
+        }
+
+        token = getNextToken(input);
+        if(token.type != NUMBER) {
+            printf("Error: Invalid value '%s' only numbers allowed\n",token.name);
+            return -1;
+        }
+
+        char *endPtr;
+        int num = strtol(token.name,&endPtr,10);
+        if(*endPtr != '\0') {
+            printf("Error: Invalid number '%s'\n",token.name);
+            return -1;
+        }
+
+        token = getNextToken(input);
+        if(token.type != EOF_) {
+            printf("Error: Invalid arguments passed\n");
+            return -1;
+        }
+
+        ptr->Variables.value[ptr->Variables.counter] = num;
+        ptr->Variables.counter++;
+
+        return 0;
+    }
+
     if(token.type != DO) {
         printf("Error: Tasks must start with 'do'\n");
         return -1;
@@ -117,19 +170,39 @@ int parseTokens(Symbol *ptr,char **input) {
     }
 
     token = getNextToken(input);
-    if(token.type != NUMBER) {
-        printf("Error: Invalid number '%s'\n",token.name);
+    if(token.type != NUMBER && token.type != NAME) {
+        printf("Error: Invalid value '%s'\n",token.name);
         return -1;
     }
 
-    char *endPtr;
-    int num = strtol(token.name,&endPtr,10);
-    if(*endPtr != '\0') {
-        printf("Error: Invalid number '%s'\n",token.name);
-        return -1;
+    if(token.type == NUMBER) {
+        char *endPtr;
+        int num = strtol(token.name,&endPtr,10);
+        if(*endPtr != '\0') {
+            printf("Error: Invalid number '%s'\n",token.name);
+            return -1;
+        }
+
+        ptr->time[ptr->counter] = num;
     }
 
-    ptr->time[ptr->counter] = num;
+    if(token.type == NAME) {
+        int found = -1;
+        for(int i=0; i<ptr->Variables.counter; i++) {
+            if(strcmp(token.name,ptr->Variables.name[i])==0) {
+                found = i;
+                break;
+            }
+        }
+
+        if(found == -1) {
+            printf("Error: Variable '%s' does not exists\n",token.name);
+            return -1;
+        }
+
+        ptr->time[ptr->counter] = ptr->Variables.value[found];
+    }
+
     token = getNextToken(input);
     if(token.type != SECONDS && token.type != MINUTES) {
         printf("Error: Forgot to assing 'seconds/minutes'\n");
@@ -199,7 +272,7 @@ int main(int argc,char **argv) {
         return 1;
     }
     
-    Symbol values = {.counter=0};
+    Symbol values = {.counter=0,.Variables.counter=0};
     FILE *input = fopen(argv[1],"r");
     if(!input) {
         printf("Error: Failed to open the file\n");
